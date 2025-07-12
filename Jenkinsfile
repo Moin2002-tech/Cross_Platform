@@ -1,41 +1,35 @@
 pipeline {
-  agent any
-  stages {
-    stage('Install Dependencies') {
-      steps {
-        sh '''
-                    sudo apt-get update
-                    sudo apt-get install -y build-essential cmake g++ mingw-w64
-                '''
-      }
-    }
+    agent any
 
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
+    stages {
+        stage('Install Build Tools') {
+            steps {
+                sh 'sudo apt update && sudo apt install -y build-essential cmake'
+            }
+        }
 
-    stage('Build for Linux') {
-      steps {
-        sh '''
-                    cmake -S . -B $BUILD_DIR/linux
-                    cmake --build $BUILD_DIR/linux
-                '''
-      }
-    }
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
-    stage('Build for Windows (Cross-Compile)') {
-      steps {
-        sh '''
-                    cmake -S . -B $BUILD_DIR/windows -DCMAKE_TOOLCHAIN_FILE=./toolchains/mingw.cmake
-                    cmake --build $BUILD_DIR/windows
-                '''
-      }
-    }
+        stage('Configure') {
+            steps {
+                sh 'cmake -S . -B build'
+            }
+        }
 
-  }
-  environment {
-    BUILD_DIR = 'build'
-  }
+        stage('Build') {
+            steps {
+                sh 'cmake --build build'
+            }
+        }
+
+        stage('Run') {
+            steps {
+                sh './build/hello'
+            }
+        }
+    }
 }
